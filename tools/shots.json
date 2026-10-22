@@ -1,0 +1,4 @@
+[
+ { "label": "prefs", "js": "localStorage.setItem('claudeGames.muted', '1'); localStorage.removeItem('claudeGames.lang'); localStorage.removeItem('dinoSafariTT.v1'); location.reload(); 'reload'", "wait": 5000 },
+ { "label": "title", "js": "game.autoPause = false; game.hold(true); game.S.ride.s = 70; game.step(1.5); JSON.stringify(game.info().visible)", "wait": 900, "shot": "screenshot" }
+]

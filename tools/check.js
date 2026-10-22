@@ -3,7 +3,7 @@
      node tools/check.js              every dinosaur findable on both levels and three screen shapes; photo scoring; the book fills
      node tools/check.js --finds      plus how long each kind of dinosaur is in view, and its best photo
      node tools/check.js --fails      proves the check can fail: each sabotage must be caught
-     node tools/check.js --sabotage hideRex|treeWall|fastJeep|noFrame|noOcclusion|noFacing|noHide   run the check with one thing broken */
+     node tools/check.js --sabotage hideRex|rockWall|fastJeep|noFrame|noOcclusion|noFacing|noHide   run the check with one thing broken */
 'use strict';
 const fs = require('fs');
 const path = require('path');

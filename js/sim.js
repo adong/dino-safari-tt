@@ -25,8 +25,8 @@
   // frame: the viewfinder's height as a share of the screen's. stars: points for 1, 2 and 3 stars. grow: EASY counts a dino
   // a little outside the drawn frame. magnet: EASY's frame drifts onto a dinosaur when you stop moving it.
   const LV = {
-    easy: { id: 'easy', speed: 5.4, slow: 3.0, frame: 0.5, film: Infinity, stars: [0, 30, 55], minIn: 0.25, minSize: 0.04, grow: 1.2, magnet: true },
-    normal: { id: 'normal', speed: 7.4, slow: 5.0, frame: 0.38, film: 30, stars: [20, 45, 70], minIn: 0.35, minSize: 0.06, grow: 1, magnet: false },
+    easy: { id: 'easy', speed: 5.6, slow: 3.8, frame: 0.5, film: Infinity, stars: [0, 30, 55], minIn: 0.25, minSize: 0.04, grow: 1.2, magnet: true },
+    normal: { id: 'normal', speed: 7.4, slow: 5.4, frame: 0.38, film: 30, stars: [20, 45, 70], minIn: 0.35, minSize: 0.06, grow: 1, magnet: false },
   };
   const ZOOM = 0.55; // the zoomed frame's size
   const WATER = -0.7;
@@ -100,7 +100,7 @@
     for (const sp of D.SPECIES) {
       sp.inst.forEach((o, i) => {
         let d = o.d;
-        if (SAB.hideRex && sp.id === 'trex') d = 150; // sabotage: the T. rex lives far outside the valley
+        if (SAB.hideRex && sp.id === 'trex') d = 400; // sabotage: the T. rex lives far outside the valley, past the mountains
         const a = beside(o.s, o.side, d), p = pathAt(o.s);
         out.push({ sp, i, o, ax: a.x, az: a.z, s: o.s, side: o.side, road: p, sc: o.scale || 1 });
       });
@@ -172,13 +172,11 @@
     // a tall tree for the Brachiosaurus to eat from, behind it (seen from the road)
     const br = A.find((a) => a.sp.id === 'brachio');
     { const p = beside(br.s + 6, -1, br.o.d + 9); addTree(p.x, p.z, 'round', 2.2); trees[trees.length - 1].snack = true; }
-    if (SAB.treeWall) {
-      // sabotage: a big tree between the road and every dinosaur
-      for (const sp of D.SPECIES) for (const a of A.filter((q) => q.sp === sp)) {
-        for (const k of [0, 0.25, 0.5]) {
-          const c = pathAt(a.s - 12 - k * 30), mx = c.x + (a.ax - c.x) * 0.45, mz = c.z + (a.az - c.z) * 0.45;
-          addTree(mx, mz, 'round', 2.4);
-        }
+    if (SAB.rockWall) {
+      // sabotage: a ring of big boulders round every dinosaur's home
+      for (const k of keepOut) {
+        const n = Math.ceil(2 * Math.PI * k.r / 5);
+        for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI, x = k.x + Math.cos(a) * k.r, z = k.z + Math.sin(a) * k.r, r = 4.5; rocks.push({ x, z, y: ground(x, z) + r * 0.45, r }); }
       }
     }
     // trees by 16 m square, so looking along a line only tests the trees near it
@@ -499,7 +497,7 @@
       let want = lvJ.speed;
       if (!ride.noSlow) {
         const cam = ride.cam;
-        const need = ride.vis.some((v) => !v.di.baby && ride.players.some((pl) => !pl.best[v.di.sp.id]) && Math.hypot(v.di.x - cam.x, v.di.z - cam.z) < 70);
+        const need = ride.vis.some((v) => !v.di.baby && ride.players.some((pl) => !pl.best[v.di.sp.id]) && Math.hypot(v.di.x - cam.x, v.di.z - cam.z) < 50);
         if (need || ride.players.some((pl) => pl.aim)) want = lvJ.slow;
       }
       if (SAB.fastJeep) want *= 3;
@@ -762,7 +760,7 @@
   function checkFails() {
     const cases = [
       ['hideRex', 'the T. rex lives far outside the valley', /findable/],
-      ['treeWall', 'a big tree stands between the road and every dinosaur', /findable/],
+      ['rockWall', 'a ring of big boulders round every dinosaur', /findable/],
       ['fastJeep', 'the jeep drives three times as fast', /findable easy/],
       ['noFrame', 'the score ignores where the frame is', /half out|sky/],
       ['noOcclusion', 'trees and rocks never hide anything', /behind a tree/],
