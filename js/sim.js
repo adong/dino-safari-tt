@@ -132,7 +132,7 @@
     const sight = [];
     for (const sp of D.SPECIES) {
       const a = A.find((q) => q.sp === sp);
-      for (const k of [10, 22, 36, 52, 70]) { const c = pathAt(a.s - k - 6); sight.push([c.x, c.z, a.ax, a.az]); }
+      for (const k of [10, 22, 36, 52, 70]) { const c = pathAt(a.s - k - 9); sight.push([c.x, c.z, a.ax, a.az]); }
     }
     const ok = (x, z, rad) => {
       const q = nearRoad(x, z);
@@ -242,7 +242,7 @@
     let dx = b.x - a.x, dz = b.z - a.z;
     const n = Math.hypot(dx, dz) || 1;
     dx /= n; dz /= n;
-    return makeCam(p.x - dx * 6.5, 3.6, p.z - dz * 6.5, dx, dz, -0.1, aspect);
+    return makeCam(p.x - dx * 9.5, 4.5, p.z - dz * 9.5, dx, dz, -0.11, aspect);
   }
   function makeCam(x, y, z, dx, dz, pitch, aspect) {
     const cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -642,7 +642,9 @@
         const have = pl.best[vv.di.sp.id];
         if (!kid && have && (have.stars >= 3 || level === 'normal')) continue;
         if (kid && have && have.stars >= 2) continue;
-        if (!tgt || Math.max(vv.b.w, vv.b.h) > Math.max(tgt.b.w, tgt.b.h)) tgt = vv;
+        // dinosaurs it hasn't got at all come first, then the biggest
+        const rank = (q) => (pl.best[q.di.sp.id] ? 0 : 10) + Math.max(q.b.w, q.b.h);
+        if (!tgt || rank(vv) > rank(tgt)) tgt = vv;
       }
       if (tgt && !kid) inp[0].target = { x: tgt.b.cx, y: tgt.b.cy };
       if (tgt && kid && wait < 0.6 && !pl.kidAim) pl.kidAim = { x: tgt.b.cx + (R() - 0.5) * pl.hw * 1.6, y: tgt.b.cy + (R() - 0.5) * pl.hh * 1.6 };

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2f6b3a">
+<title>TT Dino Safari · Teddy &amp; Tommy</title>
+<!-- The game's icon: the same emoji as its card on the dashboard, on a coloured tile. It's the browser tab's icon (the SVG, then
+     a PNG drawn below) and the iPad home screen's (apple-touch-icon). The device's own emoji font draws it: no image files. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20x='2'%20y='2'%20width='60'%20height='60'%20rx='14'%20fill='%23ff8a1f'%20stroke='%2314121f'%20stroke-width='4'/%3E%3Ctext%20x='32'%20y='44'%20font-size='36'%20text-anchor='middle'%3E%F0%9F%A6%96%3C/text%3E%3C/svg%3E">
+<script>
+  (function (emoji, tile) {
+    function draw(size, framed) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const g = c.getContext('2d');
+      if (!g) return '';
+      const u = size / 64;
+      g.fillStyle = tile;
+      if (framed) { // the tab: a rounded tile with the dashboard's dark outline
+        g.beginPath();
+        if (g.roundRect) g.roundRect(2 * u, 2 * u, 60 * u, 60 * u, 14 * u); else g.rect(2 * u, 2 * u, 60 * u, 60 * u);
+        g.fill();
+        g.lineWidth = 4 * u;
+        g.strokeStyle = '#14121f';
+        g.stroke();
+      } else g.fillRect(0, 0, size, size); // the home screen: iOS rounds the corners itself
+      g.font = `${Math.round(size * (framed ? 0.56 : 0.62))}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      g.textAlign = 'center';
+      const m = g.measureText(emoji);
+      const up = m.actualBoundingBoxAscent || size * 0.4, down = m.actualBoundingBoxDescent || 0;
+      g.fillText(emoji, size / 2, size / 2 + (up - down) / 2);
+      try { return c.toDataURL('image/png'); } catch (e) { return ''; }
+    }
+    const tab = draw(64, true), home = draw(180, false);
+    if (tab) document.querySelector('link[rel="icon"]').href = tab;
+    if (home) {
+      const l = document.createElement('link');
+      l.rel = 'apple-touch-icon';
+      l.href = home;
+      document.head.appendChild(l);
+    }
+  })('🦖', '#ff8a1f');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #ffd400;
+    --pink: #ff3d7f;
+    --cyan: #18d4ff;
+    --orange: #ff8a1f;
+    --green: #7ed957;
+    --ink: #14121f;
+    --p0: #ffd400;
+    --p1: #18d4ff;
+    --display: 'Bungee', 'Arial Black', Impact, sans-serif;
+    --left: calc(max(10px, env(safe-area-inset-left)) + 56px); /* clear of the kit's ? / A文 / sound buttons on the left edge */
+    --top: max(10px, env(safe-area-inset-top));
+    --right: max(12px, env(safe-area-inset-right));
+    --bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #2f6b3a; color: #fff;
+    font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hidden { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  @keyframes pulse { 50% { transform: scale(1.07); } }
+  @keyframes slam { from { transform: scale(2.2) rotate(-8deg); opacity: 0; } }
+  @keyframes bob { 50% { transform: translateY(-6px); } }
+  @keyframes slidein { from { transform: translateY(140%) rotate(-12deg); } }
+  @keyframes flash { from { background: rgba(255, 255, 255, 0.95); } to { background: rgba(255, 255, 255, 0); } }
+
+  /* ---------- the viewfinders ---------- */
+  #frames { position: fixed; inset: 0; pointer-events: none; }
+  .frame { position: absolute; left: 0; top: 0; width: 100px; height: 75px; border-radius: 10px; transition: box-shadow 0.2s; }
+  .frame .c { position: absolute; width: 26%; height: 30%; border: 5px solid var(--p0); filter: drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 0 2px var(--ink)); }
+  .frame .c.tl { left: -3px; top: -3px; border-right: 0; border-bottom: 0; border-radius: 10px 0 0 0; }
+  .frame .c.tr { right: -3px; top: -3px; border-left: 0; border-bottom: 0; border-radius: 0 10px 0 0; }
+  .frame .c.bl { left: -3px; bottom: -3px; border-right: 0; border-top: 0; border-radius: 0 0 0 10px; }
+  .frame .c.br { right: -3px; bottom: -3px; border-left: 0; border-top: 0; border-radius: 0 0 10px 0; }
+  .frame .dot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px; border-radius: 50%; border: 3px solid var(--p0); box-shadow: 0 0 0 2px rgba(20, 18, 31, 0.6); }
+  .frame .who { position: absolute; left: 6px; top: -26px; font-family: var(--display); font-size: 13px; color: var(--ink); background: var(--p0); border: 2px solid var(--ink); border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
+  .frame .zoom { position: absolute; right: 6px; top: -26px; font: 800 12px/1 'Rubik', sans-serif; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-radius: 8px; padding: 3px 6px; }
+  .frame.p1 .c, .frame.p1 .dot { border-color: var(--p1); }
+  .frame.p1 .who { background: var(--p1); }
+  .frame.cpu .c, .frame.cpu .dot { border-color: #6fdc4a; }
+  .frame.cpu .who { background: #6fdc4a; }
+  .frame.cpu { opacity: 0; transition: opacity 0.3s; }
+  .frame.cpu.on { opacity: 1; transition: none; }
+  .frame.flash { animation: flash 0.35s ease-out; }
+  .frame.helped { box-shadow: 0 0 0 4px rgba(255, 212, 0, 0.35), 0 0 30px rgba(255, 212, 0, 0.8); }
+  .frame.helped .dot { animation: pulse 0.5s ease-in-out infinite; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  .pbox {
+    position: absolute; top: var(--top); display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px;
+    background: rgba(20, 18, 31, 0.62); border: 3px solid var(--p0);
+  }
+  .pbox.b0 { left: max(12px, env(safe-area-inset-left)); }
+  .pbox.b1 { right: var(--right); top: calc(var(--top) + 56px); border-color: var(--p1); }
+  .pbox.cpu { border-color: #6fdc4a; }
+  .pbox img { width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #ffe2a0, #ff9f1c); border: 2px solid #fff; object-fit: cover; }
+  .pbox .em { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; background: #2f7d4f; border: 2px solid #fff; }
+  .pbox .nm { font-family: var(--display); font-size: 13px; line-height: 1; }
+  .pbox .st { font: 800 14px/1.2 'Rubik', sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pbox .st b { color: var(--yellow); }
+  #strip { position: absolute; left: 50%; translate: -50% 0; top: var(--top); display: flex; gap: 3px; padding: 4px 6px; border-radius: 14px; background: rgba(20, 18, 31, 0.5); }
+  #strip img { width: 40px; height: 30px; filter: brightness(0) opacity(0.55); transition: filter 0.3s, transform 0.3s; }
+  #strip img.got { filter: none; }
+  #strip img.pop { transform: scale(1.5); }
+  .ibtns { position: fixed; right: var(--right); top: var(--top); display: flex; gap: 8px; pointer-events: auto; }
+  .ibtn { width: 46px; height: 46px; border-radius: 14px; font-size: 19px; line-height: 1; background: rgba(20, 18, 31, 0.6); border: 2px solid rgba(255, 255, 255, 0.85); display: grid; place-items: center; color: #fff; }
+  .msg {
+    position: absolute; left: 0; right: 0; top: 19%; text-align: center; font-family: var(--display); opacity: 0;
+    font-size: clamp(22px, 4.2vw, 46px); line-height: 1.05; color: var(--yellow); padding: 0 70px;
+    -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 5px 0 var(--pink), 0 9px 0 var(--ink);
+    transition: opacity 0.25s;
+  }
+  .msg small { display: block; margin: 8px auto 0; max-width: 680px; font: 800 clamp(14px, 2.2vw, 21px)/1.25 'Rubik', sans-serif; color: #fff; -webkit-text-stroke: 0; text-shadow: 0 2px 0 var(--ink), 0 0 6px var(--ink); }
+  .msg.show { opacity: 1; animation: slam 0.35s cubic-bezier(.2, 1.6, .4, 1); }
+  .msg.cool { color: var(--cyan); text-shadow: 0 5px 0 var(--yellow), 0 9px 0 var(--ink); }
+  .msg.good { color: var(--green); text-shadow: 0 5px 0 #1a7a3a, 0 9px 0 var(--ink); }
+  .msg.ouch { color: #ffb0c8; text-shadow: 0 5px 0 #6a3d8a, 0 9px 0 var(--ink); }
+  .zone { position: absolute; left: 50%; translate: -50% 0; top: calc(var(--top) + 48px); font-family: var(--display); font-size: 16px; color: var(--ink); background: #f2d39a; border: 3px solid #7a4f2e; border-radius: 10px; padding: 3px 12px; opacity: 0; transition: opacity 0.4s; white-space: nowrap; }
+  .zone.show { opacity: 1; }
+  .cpumsg { position: absolute; right: var(--right); top: calc(var(--top) + 110px); font: 800 14px/1 'Rubik', sans-serif; background: rgba(20, 18, 31, 0.7); border: 2px solid #6fdc4a; border-radius: 10px; padding: 6px 10px; opacity: 0; transition: opacity 0.3s; }
+  .cpumsg.show { opacity: 1; }
+  .polaroid {
+    position: absolute; left: var(--left); bottom: var(--bottom); width: 168px; padding: 7px 7px 6px; border-radius: 6px; background: #fff; color: var(--ink);
+    box-shadow: 0 6px 0 rgba(20, 18, 31, 0.5); transform: rotate(-4deg); text-align: center; opacity: 0; transition: opacity 0.4s;
+  }
+  .polaroid.show { opacity: 1; animation: slidein 0.45s cubic-bezier(.2, 1.4, .4, 1); }
+  .polaroid img { display: block; width: 154px; height: 115px; object-fit: cover; background: #ddd; border-radius: 2px; }
+  .polaroid .cap { font-family: var(--display); font-size: 11px; margin-top: 4px; line-height: 1.1; }
+  .polaroid .stars { font-size: 16px; line-height: 1.1; }
+  .polaroid.p1 { left: auto; right: var(--right); transform: rotate(4deg); }
+  .bud {
+    position: absolute; right: var(--right); bottom: var(--bottom); display: flex; align-items: center; gap: 6px; padding: 4px 12px 4px 4px; border-radius: 999px; pointer-events: auto;
+    background: rgba(20, 18, 31, 0.65); border: 3px solid rgba(255, 255, 255, 0.85);
+  }
+  .bud img { width: 54px; height: 54px; border-radius: 50%; border: 2px solid #fff; background: radial-gradient(circle at 50% 35%, #ffe2a0, #ff9f1c); object-fit: cover; }
+  .bud .lbl { font: 800 11px/1.1 'Rubik', sans-serif; letter-spacing: 0.5px; white-space: nowrap; text-align: left; }
+  .bud .lbl b { display: block; font-family: var(--display); font-weight: 400; font-size: 14px; }
+  .bud .k { font: 800 12px/1 'Rubik', sans-serif; padding: 4px 7px; border-radius: 6px; background: #fff; color: var(--ink); }
+  .bud.on { border-color: var(--yellow); box-shadow: 0 0 16px rgba(255, 212, 0, 0.8); }
+  .bud.on img { border-color: var(--yellow); animation: pulse 0.7s ease-in-out infinite; }
+  .bud.hf { right: 50%; translate: 50% 0; }
+  body.touch .bud .k { display: none; }
+  .zbtn { position: absolute; bottom: var(--bottom); width: 62px; height: 62px; border-radius: 50%; font-size: 26px; display: none; place-items: center; pointer-events: auto; background: linear-gradient(160deg, #ffffff, #dfe8ff); border: 4px solid var(--ink); box-shadow: 0 5px 0 var(--ink); color: var(--ink); }
+  .zbtn.on { background: var(--yellow); }
+  body.touch .zbtn { display: grid; }
+  .zbtn.z0 { right: calc(var(--right) + 196px); }
+  body.duo .zbtn.z0 { right: auto; left: calc(var(--left) + 180px); }
+  .zbtn.z1 { right: calc(var(--right) + 180px); display: none !important; }
+  body.touch.duo .zbtn.z1 { display: grid !important; }
+  .hint2 { position: absolute; left: 50%; translate: -50% 0; bottom: var(--bottom); font: 800 13px/1.2 'Rubik', sans-serif; background: rgba(20, 18, 31, 0.6); padding: 5px 12px; border-radius: 999px; white-space: nowrap; transition: opacity 0.6s; }
+  body.duo .hint2 { bottom: calc(var(--bottom) + 76px); }
+  .count {
+    position: fixed; left: 0; right: 0; top: 34%; text-align: center; font-family: var(--display); font-size: clamp(60px, 13vw, 150px); line-height: 1;
+    color: #fff; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 0 8px 0 var(--pink), 0 14px 0 var(--ink); opacity: 0; pointer-events: none;
+  }
+  .count.show { opacity: 1; animation: slam 0.35s ease-out; }
+  @media (max-height: 460px) {
+    .pbox img, .pbox .em { width: 30px; height: 30px; font-size: 19px; }
+    .pbox .nm { font-size: 11px; } .pbox .st { font-size: 12px; }
+    .pbox.b1 { top: calc(var(--top) + 46px); }
+    #strip img { width: 28px; height: 21px; }
+    .zone { top: calc(var(--top) + 34px); font-size: 13px; }
+    .ibtn { width: 40px; height: 40px; }
+    .polaroid { width: 120px; padding: 5px; } .polaroid img { width: 110px; height: 82px; } .polaroid .cap { font-size: 9px; }
+    .bud img { width: 42px; height: 42px; } .bud .lbl b { font-size: 12px; }
+    .msg { top: 16%; } .cpumsg { top: calc(var(--top) + 92px); }
+    .zbtn { width: 52px; height: 52px; font-size: 22px; }
+    .hint2 { display: none; }
+  }
+  @media (max-width: 700px) {
+    #strip { top: calc(var(--top) + 52px); left: max(12px, env(safe-area-inset-left)); translate: none; flex-wrap: wrap; width: 196px; }
+    #strip img { width: 26px; height: 20px; }
+    .zone { top: auto; bottom: calc(var(--bottom) + 140px); }
+    .pbox.b1, .cpumsg { top: calc(var(--top) + 52px); }
+    .cpumsg { top: calc(var(--top) + 104px); }
+    .polaroid { width: 110px; padding: 5px; } .polaroid img { width: 100px; height: 75px; } .polaroid .cap { font-size: 9px; } .polaroid .stars { font-size: 12px; }
+    .zbtn.z0 { right: var(--right); bottom: calc(var(--bottom) + 84px); }
+    .hint2 { display: none; }
+  }
+  @media (max-width: 700px) and (max-height: 460px) { #strip { width: auto; flex-wrap: nowrap; left: 50%; translate: -50% 0; top: var(--top); } .zone { bottom: auto; top: calc(var(--top) + 30px); } }
+
+  /* ---------- screens ---------- */
+  .screen {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    gap: clamp(8px, 1.8vh, 16px); padding: 16px 16px 16px var(--left); text-align: center; transition: opacity 0.3s;
+    background: linear-gradient(180deg, rgba(20, 40, 30, 0.05), rgba(14, 30, 20, 0.62));
+    overflow-y: auto; justify-content: safe center;
+  }
+  .logo { font-family: var(--display); line-height: 0.95; transform: rotate(-3deg); }
+  .logo .l1 { display: block; font-size: clamp(42px, 9vw, 100px); color: var(--yellow); -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 0 7px 0 var(--orange), 0 13px 0 var(--ink); }
+  .logo .dino { display: inline-block; animation: bob 0.8s ease-in-out infinite; -webkit-text-stroke: 0; }
+  .tag { font-weight: 800; font-size: clamp(15px, 2.3vw, 21px); text-shadow: 0 2px 0 var(--ink); }
+  .btn {
+    font-family: var(--display); font-size: clamp(18px, 3vw, 25px); color: var(--ink);
+    background: var(--yellow); border: 4px solid var(--ink); border-radius: 20px; padding: 11px 24px;
+    box-shadow: 0 8px 0 var(--ink), 0 14px 30px rgba(0, 0, 0, 0.3); transition: transform 0.08s, box-shadow 0.08s;
+  }
+  .btn small { display: block; font: 800 12px/1.2 'Rubik', sans-serif; margin-top: 3px; }
+  .btn:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--ink); }
+  .btn.alt { background: var(--cyan); }
+  .btn.green { background: #9be37a; }
+  .btn.ghost { background: rgba(255, 255, 255, 0.9); }
+  .btn.small { font-size: clamp(15px, 2.4vw, 19px); padding: 8px 18px; }
+  .btn.pulse { animation: pulse 1.2s ease-in-out infinite; }
+  .modes, .btnrow, .selbtns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .row .h, .pickrow .h { font-family: var(--display); font-size: 15px; letter-spacing: 1px; text-shadow: 0 2px 0 var(--ink); }
+  .opt {
+    display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 14px; text-align: left;
+    background: rgba(20, 18, 31, 0.55); border: 3px solid rgba(255, 255, 255, 0.7); transition: transform 0.12s;
+  }
+  .opt .e { font-size: 28px; }
+  .opt b { display: block; font-family: var(--display); font-weight: 400; font-size: 17px; }
+  .opt small { font-size: 11px; font-weight: 700; opacity: 0.9; }
+  .opt.on { background: var(--yellow); color: var(--ink); border-color: var(--ink); box-shadow: 0 5px 0 var(--ink); transform: translateY(-2px); }
+  .keys {
+    display: grid; grid-template-columns: auto auto auto; gap: 4px 16px; align-items: center; text-align: left;
+    padding: 10px 16px; border-radius: 16px; background: rgba(20, 18, 31, 0.6); border: 2px solid rgba(255, 255, 255, 0.6);
+    font-size: 13px; font-weight: 700;
+  }
+  .keys .h { font-family: var(--display); font-size: 12px; color: var(--p0); }
+  .keys .h.p2 { color: var(--p1); }
+  kbd {
+    display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; margin: 1px;
+    font: 700 12px/1 system-ui, sans-serif; color: var(--ink); background: #fff; border-radius: 6px; box-shadow: 0 2px 0 #9aa;
+  }
+  .touch-hint { display: none; font-weight: 700; font-size: 15px; max-width: 560px; text-shadow: 0 2px 0 var(--ink); }
+  body.touch .keys { display: none; }
+  body.touch .touch-hint { display: block; }
+  .credit { font-size: 12px; opacity: 0.8; }
+  .hint { font-size: 13px; font-weight: 700; opacity: 0.85; text-shadow: 0 2px 0 var(--ink); }
+  body.touch .hint { display: none; }
+  .seltitle { font-family: var(--display); font-size: clamp(24px, 4.5vw, 44px); color: var(--yellow); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 5px 0 var(--ink); }
+  .pickrow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .cards { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .card {
+    position: relative; padding: 8px 12px 10px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 130px;
+    background: rgba(20, 18, 31, 0.6); border: 3px solid rgba(255, 255, 255, 0.55); transition: transform 0.12s;
+  }
+  .card img { width: 90px; height: 90px; border-radius: 14px; background: radial-gradient(circle at 50% 35%, #ffe2a0, #ff9f1c); }
+  .card b { font-family: var(--display); font-weight: 400; font-size: 16px; }
+  .card small { font-size: 11px; font-weight: 700; opacity: 0.85; }
+  .card .who { position: absolute; top: -10px; right: -8px; font-family: var(--display); font-size: 12px; padding: 2px 7px; border-radius: 999px; border: 2px solid var(--ink); color: var(--ink); background: var(--p0); }
+  .card .who.p2 { background: var(--p1); }
+  .card.on { background: var(--yellow); color: var(--ink); border-color: var(--ink); box-shadow: 0 5px 0 var(--ink); transform: translateY(-3px); }
+  .lvl2 { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .lvl2 .opt { padding: 4px 10px 4px 6px; }
+  .lvl2 .opt .e { font-size: 20px; }
+  .big {
+    font-family: var(--display); font-size: clamp(34px, 7.5vw, 80px); color: var(--cyan); transform: rotate(-4deg); line-height: 1;
+    -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; text-shadow: 0 7px 0 var(--yellow), 0 12px 0 var(--ink);
+  }
+  #resTitle.win { color: var(--yellow); text-shadow: 0 7px 0 var(--pink), 0 12px 0 var(--ink); }
+  #results { background: linear-gradient(180deg, rgba(14, 30, 20, 0), rgba(14, 30, 20, 0.6) 40%, rgba(14, 30, 20, 0.82)); justify-content: flex-end; padding-bottom: 22px; }
+  .stats { border-collapse: separate; border-spacing: 0 4px; font-weight: 800; font-size: 15px; background: rgba(20, 18, 31, 0.6); border-radius: 16px; padding: 6px 12px; }
+  .stats td, .stats th { padding: 2px 10px; text-align: left; white-space: nowrap; }
+  .stats th { font-family: var(--display); font-weight: 400; font-size: 11px; color: #9be37a; }
+  .stats td.who img { width: 28px; height: 28px; vertical-align: middle; border-radius: 8px; margin-right: 6px; background: radial-gradient(circle at 50% 35%, #ffe2a0, #ff9f1c); }
+  .stats .new { color: var(--yellow); }
+  .photos { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 920px; }
+  .photo { width: 112px; padding: 5px 5px 4px; background: #fff; color: var(--ink); border-radius: 5px; box-shadow: 0 4px 0 rgba(20, 18, 31, 0.5); }
+  .photo:nth-child(odd) { transform: rotate(-2deg); } .photo:nth-child(even) { transform: rotate(2deg); }
+  .photo img { display: block; width: 102px; height: 76px; object-fit: cover; border-radius: 2px; background: #ddd; }
+  .photo b { display: block; font-family: var(--display); font-weight: 400; font-size: 9px; margin-top: 3px; line-height: 1.1; }
+  .photo span { font-size: 11px; }
+  .photo .nw { display: block; font: 800 9px/1 'Rubik', sans-serif; color: #e0396a; }
+
+  /* ---------- the dino book ---------- */
+  #book { justify-content: flex-start; background: linear-gradient(180deg, rgba(60, 40, 20, 0.86), rgba(40, 26, 12, 0.94)); }
+  .bookhead { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .bookgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; width: min(1100px, 100%); }
+  .page { position: relative; background: #fbf3dc; color: var(--ink); border-radius: 12px; padding: 8px; text-align: left; border: 3px solid #b88a4a; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; gap: 4px; }
+  .page .pic { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; overflow: hidden; background: #e2d4ae; display: grid; place-items: center; }
+  .page .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .page .pic img.sil { width: 80%; height: auto; object-fit: contain; filter: brightness(0) opacity(0.35); }
+  .page .pic .q { position: absolute; font-family: var(--display); font-size: 42px; color: rgba(20, 18, 31, 0.5); }
+  .page b { font-family: var(--display); font-weight: 400; font-size: 14px; line-height: 1.1; }
+  .page .stars { font-size: 15px; }
+  .page p { font-size: 13px; font-weight: 700; line-height: 1.25; }
+  .page .by { font-size: 11px; font-weight: 800; opacity: 0.7; }
+  .page .say { position: absolute; right: 12px; top: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--yellow); border: 3px solid var(--ink); font-size: 18px; display: grid; place-items: center; }
+  .page.locked p { font-style: italic; opacity: 0.75; }
+
+  #menuMute {
+    position: fixed; right: var(--right); top: max(14px, env(safe-area-inset-top));
+    width: 54px; height: 54px; border-radius: 16px; font-size: 26px; line-height: 1; display: grid; place-items: center;
+    background: rgba(20, 18, 31, 0.6); border: 3px solid #fff; box-shadow: 0 4px 0 var(--ink); transition: opacity 0.3s; color: #fff;
+  }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #2f6b3a; font-family: var(--display); font-size: 28px; letter-spacing: 2px; padding: 24px; text-align: center; }
+  .rotate { display: none; position: fixed; left: 50%; bottom: 120px; translate: -50% 0; font-weight: 800; font-size: 13px; background: rgba(20, 18, 31, 0.7); padding: 6px 12px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  @media (orientation: portrait) and (max-width: 700px) { body.riding .rotate { display: block; } }
+  @media (max-height: 460px) {
+    .logo .l1 { font-size: 40px; -webkit-text-stroke-width: 3px; }
+    .tag { font-size: 13px; }
+    .btn { font-size: 15px; padding: 6px 14px; border-radius: 14px; box-shadow: 0 5px 0 var(--ink); }
+    .btn small { font-size: 10px; }
+    .opt { padding: 3px 10px 3px 6px; } .opt .e { font-size: 20px; } .opt b { font-size: 13px; } .opt small { font-size: 9px; }
+    .keys, #select .hint, #results .hint, .credit { display: none; }
+    .card { min-width: 100px; padding: 4px 8px 6px; } .card img { width: 56px; height: 56px; } .card b { font-size: 13px; } .card small { display: none; }
+    .seltitle { font-size: 22px; }
+    .big { font-size: 32px; }
+    .stats { font-size: 12px; }
+    .photo { width: 84px; } .photo img { width: 74px; height: 55px; }
+    #results { padding-bottom: 8px; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="frames">
+  <div class="frame cpu" id="fcpu"><span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span><span class="who">🐸 FROGGY</span></div>
+  <div class="frame p0 hidden" id="f0"><span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span><span class="dot"></span><span class="who"></span><span class="zoom hidden">🔍 ×2</span></div>
+  <div class="frame p1 hidden" id="f1"><span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span><span class="dot"></span><span class="who"></span><span class="zoom hidden">🔍 ×2</span></div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="pbox b0"><img alt=""><span><span class="nm"></span><br><span class="st"></span></span></div>
+  <div class="pbox b1"><img alt=""><span class="em">🐸</span><span><span class="nm"></span><br><span class="st"></span></span></div>
+  <div id="strip"></div>
+  <div class="zone"></div>
+  <div class="cpumsg"></div>
+  <div class="msg"></div>
+  <div class="polaroid p0"><img alt=""><div class="stars"></div><div class="cap"></div></div>
+  <div class="polaroid p1"><img alt=""><div class="stars"></div><div class="cap"></div></div>
+  <button class="bud" id="bud"><img alt=""><span class="lbl">CALL<b></b></span><span class="k">T</span></button>
+  <button class="zbtn z0" data-zoom="0" aria-label="Zoom">🔍</button>
+  <button class="zbtn z1" data-zoom="1" aria-label="Zoom">🔍</button>
+  <div class="hint2" id="hint2">Move the frame onto a dinosaur, then snap!</div>
+  <div class="ibtns">
+    <button id="pauseBtn" class="ibtn" title="Pause (P)" aria-label="Pause">❚❚</button>
+    <button class="ibtn muteBtn" title="Sound (M)" aria-label="Sound on or off">🔊</button>
+  </div>
+</div>
+<div id="count" class="count"></div>
+
+<div id="title" class="screen hidden">
+  <div class="logo" data-no-lang><span class="l1"><span class="dino">🦖</span> <span id="logoText"></span></span></div>
+  <p class="tag" id="tagline"></p>
+  <div class="modes">
+    <button class="btn pulse" data-mode="safari">📸 SAFARI<small>take photos with Froggy</small></button>
+    <button class="btn alt" data-mode="2p">👫 2 PLAYERS<small>Teddy and Tommy in the jeep</small></button>
+    <button class="btn green" data-mode="book">📖 DINO BOOK<small id="bookCount"></small></button>
+  </div>
+  <div class="row" role="radiogroup" aria-label="Difficulty">
+    <span class="h">LEVEL</span>
+    <button class="opt" data-level="easy" role="radio"><span class="e">🐣</span><span><b>EASY</b><small>big frame · it helps you aim · all the photos you want</small></span></button>
+    <button class="opt" data-level="normal" role="radio"><span class="e">🔥</span><span><b>NORMAL</b><small>faster jeep · 30 photos · get them big and in the middle</small></span></button>
+  </div>
+  <div class="keys">
+    <span></span><span class="h">PLAYER 1</span><span class="h p2">PLAYER 2</span>
+    <span>move the frame</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or mouse</span><span><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span>
+    <span>snap a photo</span><span><kbd>Space</kbd> or click</span><span><kbd>Enter</kbd></span>
+    <span>zoom</span><span><kbd>Q</kbd></span><span><kbd>/</kbd></span>
+    <span>call your brother</span><span><kbd>T</kbd></span><span></span>
+  </div>
+  <p class="touch-hint">Tap a dinosaur to take its photo (or slide your finger to move the frame and let go to snap). 🔍 zooms in. Tap your brother's face to call him!</p>
+  <div class="credit">built with <b>Claude Code</b></div>
+</div>
+
+<div id="select" class="screen hidden">
+  <div id="selTitle" class="seltitle">WHO IS TAKING PHOTOS?</div>
+  <div class="pickrow"><div class="cards" id="who" role="listbox" aria-label="Photographers"></div></div>
+  <div class="lvl2" id="lvl2"></div>
+  <div class="selbtns">
+    <button id="selBack" class="btn small ghost">◀ BACK</button>
+    <button id="selGo" class="btn small pulse">GO! 🚙</button>
+  </div>
+  <p class="hint">← → pick · Enter: go · Esc: back</p>
+</div>
+
+<div id="pause" class="screen hidden">
+  <div class="big">PAUSED</div>
+  <div class="btnrow">
+    <button id="resumeBtn" class="btn">▶ RESUME</button>
+    <button id="restartBtn" class="btn alt small">↻ RESTART</button>
+    <button id="quitBtn" class="btn small ghost">MENU</button>
+  </div>
+  <p class="hint">P · Esc to resume · Q for the menu · M sound</p>
+</div>
+
+<div id="results" class="screen hidden">
+  <div id="resTitle" class="big">WELL DONE!</div>
+  <p id="resSub" class="tag"></p>
+  <table id="resTable" class="stats"></table>
+  <div class="photos" id="resPhotos"></div>
+  <div class="btnrow">
+    <button id="againBtn" class="btn pulse">↻ PLAY AGAIN</button>
+    <button id="resBook" class="btn green small">📖 DINO BOOK</button>
+    <button id="menuBtn" class="btn ghost small">MENU</button>
+  </div>
+  <p class="hint">Enter: play again · B: dino book · Esc: menu</p>
+</div>
+
+<div id="book" class="screen hidden">
+  <div class="bookhead">
+    <div class="seltitle">📖 DINO BOOK</div>
+    <span class="tag" id="bookProg"></span>
+    <button id="bookBack" class="btn small ghost">◀ BACK</button>
+  </div>
+  <div class="bookgrid" id="bookGrid"></div>
+  <p class="hint">Esc or B: back</p>
+</div>
+
+<button id="menuMute" class="muteBtn hidden" title="Sound on / off (M)" aria-label="Sound on or off">🔊</button>
+
+<div id="loading">LOADING…</div>
+<div class="rotate">↻ Turn sideways to see more of the valley!</div>
+
+<script src="kit/three.min.js"></script>
+<script src="kit/gfx.js"></script>
+<script src="kit/people.js"></script>
+<script src="kit/roster.js"></script>
+<script src="kit/portraits.js"></script>
+<script src="kit/sound.js"></script>
+<script src="kit/lang.js"></script>
+<script src="kit/help.js"></script>
+<script src="js/title.js"></script>
+<script src="js/dinos.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/art.js"></script>
+<script src="js/game.js"></script>
+<script src="js/keys.js"></script>
+<script src="js/zh.js"></script>
+</body>
+</html>
